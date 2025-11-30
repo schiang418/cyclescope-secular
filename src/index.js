@@ -67,7 +67,7 @@ const server = http.createServer(async (req, res) => {
       config: {
         dataDir: config.storage.dataDir,
         retentionDays: config.storage.retentionDays,
-        chartUrl: config.tradingview.chartUrl
+        chartUrl: config.stockcharts.chartUrl
       },
       downloadStatus: downloadStatus
     }));
@@ -212,7 +212,7 @@ server.listen(PORT, () => {
   console.log(`[Server] CycleScope Secular health check server running on port ${PORT}`);
   console.log(`[Server] Health check: http://localhost:${PORT}/health`);
   console.log(`[Server] Data directory: ${config.storage.dataDir}`);
-  console.log(`[Server] Chart URL: ${config.tradingview.chartUrl}`);
+  console.log(`[Server] Chart URL: ${config.stockcharts.chartUrl}`);
 });
 
 // Graceful shutdown
