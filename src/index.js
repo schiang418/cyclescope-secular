@@ -10,7 +10,7 @@
 import http from 'http';
 import fs from 'fs';
 import { config } from './config.js';
-import { downloadChartWithLoginAndRetry } from './services/tradingview-with-login.js';
+import { downloadStockChartWithRetry } from './services/stockcharts-downloader.js';
 import { getCurrentDate } from './utils/date.js';
 
 const PORT = process.env.PORT || 3000;
@@ -37,7 +37,7 @@ async function runDownloadInBackground(date) {
   console.log(`[Background] Starting chart download for date: ${date}`);
   
   try {
-    const filePath = await downloadChartWithLoginAndRetry(date);
+    const filePath = await downloadStockChartWithRetry(date);
     
     downloadStatus.isRunning = false;
     downloadStatus.lastEndTime = new Date().toISOString();
@@ -134,8 +134,8 @@ const server = http.createServer(async (req, res) => {
       
       console.log(`[API] Starting chart download for date: ${date}`);
       
-      // Download chart with login (this will take ~60 seconds)
-      const filePath = await downloadChartWithLoginAndRetry(date);
+      // Download chart from StockCharts (this will take ~10-15 seconds)
+      const filePath = await downloadStockChartWithRetry(date);
       
       console.log(`[API] Chart downloaded successfully: ${filePath}`);
       console.log(`[API] Reading file to send to client...`);

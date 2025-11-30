@@ -13,12 +13,10 @@ dotenv.config({ path: join(rootDir, '.env') });
  * Application configuration
  */
 export const config = {
-  // TradingView
-  tradingview: {
-    chartUrl: process.env.TRADINGVIEW_CHART_URL || 'https://www.tradingview.com/chart/JUw67EaN/',
-    username: process.env.TRADINGVIEW_USERNAME,
-    password: process.env.TRADINGVIEW_PASSWORD,
-    waitTime: 60000, // 60 seconds for chart to fully load
+  // StockCharts (replaced TradingView due to login issues)
+  stockcharts: {
+    chartUrl: process.env.STOCKCHARTS_CHART_URL || 'https://schrts.co/UFNDiHPE',
+    waitTime: 10000, // 10 seconds for chart to fully load
     viewport: {
       width: 1920,
       height: 1080
@@ -62,8 +60,8 @@ export const config = {
 export function validateConfig() {
   const errors = [];
 
-  if (!config.tradingview.chartUrl) {
-    errors.push('TRADINGVIEW_CHART_URL is required');
+  if (!config.stockcharts.chartUrl) {
+    errors.push('STOCKCHARTS_CHART_URL is required');
   }
 
   if (!config.openai.apiKey) {
