@@ -1,10 +1,10 @@
 # CycleScope Secular
 
-Automated market analysis system that captures TradingView Secular Bull Channel charts, analyzes them using OpenAI Assistant, annotates with Gemini AI, and stores results in PostgreSQL database.
+Automated market analysis system that captures StockCharts.com $SPX monthly charts, analyzes them using OpenAI Assistant, annotates with Gemini AI, and stores results in PostgreSQL database.
 
 ## Features
 
-- ✅ **Automated TradingView Chart Capture**: Downloads "Secular bull channel" chart using Playwright
+- ✅ **Automated StockCharts Chart Capture**: Downloads $SPX monthly chart with RSI(14) using Playwright
 - 🔄 **OpenAI Secular Assistant Integration**: Analyzes charts with 3-layer structured output (Layer 1, 2, 3)
 - 🎨 **Gemini Chart Annotation**: Adds AI-generated annotations to charts
 - 💾 **PostgreSQL Storage**: Stores analysis results and chart URLs in database
@@ -92,8 +92,8 @@ cp .env.example .env
 ### Environment Variables
 
 ```bash
-# TradingView
-TRADINGVIEW_CHART_URL=https://www.tradingview.com/chart/JUw67EaN/
+# StockCharts
+STOCKCHARTS_CHART_URL=https://schrts.co/UFNDiHPE
 
 # OpenAI
 OPENAI_API_KEY=sk-proj-...
@@ -351,12 +351,14 @@ This will:
 
 ### Test Results
 
-**TradingView Download Test**: ✅ PASSED
+**StockCharts Download Test**: ✅ PASSED
 
-- Chart URL: `https://www.tradingview.com/chart/JUw67EaN/`
-- Screenshot size: 171 KB (1920x1080 PNG)
-- Popup handling: Working
-- File saved to: `/tmp/cyclescope-data/2025-11-29/original_chart.png`
+- Chart URL: `https://schrts.co/UFNDiHPE`
+- Chart: $SPX S&P 500 Large Cap Index (Monthly, 1980-present)
+- Indicator: RSI(14) with 30/70 reference lines
+- Screenshot size: ~51 KB (1100x555 PNG, cropped)
+- No login required (public chart)
+- File saved to: `/tmp/cyclescope-data/2025-11-30/original_chart.png`
 
 ## Deployment
 
