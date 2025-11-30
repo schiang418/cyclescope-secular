@@ -2,59 +2,55 @@ import { GoogleGenAI } from '@google/genai';
 import fs from 'fs';
 import path from 'path';
 
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = 'gemini-3-pro-image-preview';
+
 /**
  * Gemini Chart Annotator Service
  * 
- * Uses Google Gemini 3 Pro to overlay analysis text on stock charts
- * without altering the underlying price data.
+ * Superimposes Layer 3 analysis onto stock chart images using Google Gemini AI.
  */
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || 'AIzaSyBrBs2t1D5Km12Ri6PjFgso38ljBiNmJOI';
-const GEMINI_MODEL = 'gemini-3-pro-image-preview';
-
-export class GeminiAnnotator {
+class GeminiAnnotator {
   constructor() {
     if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY environment variable is required');
+      console.warn('[Gemini] WARNING: GEMINI_API_KEY not set');
     }
-
     this.client = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
   }
 
   /**
-   * Format Layer 3 output for overlay display
+   * Format Layer 3 analysis for overlay text
    * @param {Object} layer3 - Layer 3 analysis object
    * @returns {string} Formatted text for overlay
    */
   formatLayer3ForOverlay(layer3) {
-    const { scenario_summary, primary_message } = layer3;
+    const lines = [];
     
-    let text = '';
-    
-    // Add scenario summaries as bullets
-    if (scenario_summary && Array.isArray(scenario_summary)) {
-      scenario_summary.forEach(summary => {
-        text += `• ${summary}\n`;
+    // Add scenario summaries as bullet points
+    if (layer3.scenario_summary && Array.isArray(layer3.scenario_summary)) {
+      layer3.scenario_summary.forEach(summary => {
+        lines.push(`• ${summary}`);
       });
     }
     
     // Add primary message
-    if (primary_message) {
-      text += `\n${primary_message}`;
+    if (layer3.primary_message) {
+      lines.push('');
+      lines.push(layer3.primary_message);
     }
     
-    return text.trim();
+    return lines.join('\\n');
   }
 
   /**
-   * Annotate chart with analysis overlay
+   * Annotate chart with Layer 3 analysis
    * @param {string} inputPath - Path to original chart PNG
    * @param {string} outputPath - Path to save annotated chart PNG
    * @param {Object} layer3 - Layer 3 analysis object
    * @returns {Promise<string>} Path to annotated chart
    */
   async annotateChart(inputPath, outputPath, layer3) {
-    console.log('\n========================================');
+    console.log('\\n========================================');
     console.log('[Gemini] Starting chart annotation...');
     console.log(`[Gemini] Input: ${inputPath}`);
     console.log(`[Gemini] Output: ${outputPath}`);
@@ -78,7 +74,7 @@ export class GeminiAnnotator {
     console.log(`[Gemini] Image size: ${fileBuffer.length} bytes`);
     console.log(`[Gemini] Base64 length: ${base64Image.length} chars`);
 
-    // Construct the prompt
+    // Construct the strict prompt
     const prompt = `
 You are a specialized financial charting assistant.
   
@@ -92,7 +88,7 @@ INPUT NOTES:
 VISUALIZATION RULES:
 1. NO DRAWING ON CANDLES: Do NOT draw arrows, trendlines, curves, or prediction paths. Do not touch the price action/candles.
 2. OVERLAY BOX: Create a semi-transparent dark background box (like a "Heads Up Display" or Legend).
-3. PLACEMENT: Place this box in an empty area of the chart (preferably top-left or bottom-left) where it DOES NOT OBSCURE the recent price candles (usually on the right).
+3. PLACEMENT: Place this box in an empty area of the image file (preferably top-right) where it DOES NOT OBSCURE the recent price candles (usually on the right).
 4. CONTENT: Inside the box, render the provided inputs as a crisp, readable BULLETED LIST.
 5. STYLE: Use bright white text for high contrast. Use a professional sans-serif font. 
 6. FONT SIZE: CRITICAL - USE A VERY SMALL, COMPACT FONT SIZE (approx 10px). The text must be legible but minimize screen real estate usage.
@@ -149,7 +145,7 @@ Generate a new image that acts as a perfect copy of the original with the reques
       const imagePart = parts.find(part => part.inlineData && part.inlineData.data);
 
       if (!imagePart || !imagePart.inlineData) {
-        // Check if model returned text instead
+        // Check if model returned text instead of image
         const textPart = parts.find(part => part.text);
         if (textPart) {
           throw new Error(`Model returned text instead of image: ${textPart.text}`);
@@ -159,7 +155,7 @@ Generate a new image that acts as a perfect copy of the original with the reques
 
       // Write to disk
       const outputBuffer = Buffer.from(imagePart.inlineData.data, 'base64');
-
+      
       // Ensure directory exists
       const dir = path.dirname(outputPath);
       if (!fs.existsSync(dir)) {
@@ -170,11 +166,11 @@ Generate a new image that acts as a perfect copy of the original with the reques
       console.log(`[Gemini] Annotated chart saved: ${outputPath}`);
       console.log(`[Gemini] Output file size: ${outputBuffer.length} bytes`);
       console.log('[Gemini] Annotation completed successfully');
-      console.log('========================================\n');
+      console.log('========================================\\n');
 
       return outputPath;
     } catch (error) {
-      console.error('\n========================================');
+      console.error('\\n========================================');
       console.error('[Gemini] ❌ ANNOTATION FAILED');
       console.error('[Gemini] Error name:', error.name);
       console.error('[Gemini] Error message:', error.message);
@@ -182,7 +178,7 @@ Generate a new image that acts as a perfect copy of the original with the reques
       if (error.response) {
         console.error('[Gemini] API Response:', JSON.stringify(error.response, null, 2));
       }
-      console.error('========================================\n');
+      console.error('========================================\\n');
       throw error;
     }
   }
