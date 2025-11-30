@@ -9,8 +9,7 @@
     "download": "node src/download-tradingview.js",
     "test": "node src/test-download.js",
     "test:login": "node src/test-download-with-login.js",
-    "dev": "node --watch src/index.js",
-    "postinstall": "npx playwright install --with-deps chromium"
+    "dev": "node --watch src/index.js"
   },
   "keywords": [
     "tradingview",

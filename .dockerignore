@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+test_chart.png
+test_chart_with_login.png
+test-output/
+/tmp/
+.DS_Store
