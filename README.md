@@ -112,10 +112,54 @@ RETENTION_DAYS=30
 
 ## Usage
 
-### Test TradingView Download
+### Option 1: API Endpoint (Recommended)
+
+Start the server and trigger downloads via HTTP API:
 
 ```bash
+# Start the server
+npm start
+
+# In another terminal, trigger a download
+curl -X POST http://localhost:3000/download
+
+# Check health status
+curl http://localhost:3000/health
+```
+
+**From your local Mac to Railway**:
+
+```bash
+# Get your Railway app URL from the Railway dashboard
+# Example: https://cyclescope-secular-production.up.railway.app
+
+# Trigger download on Railway
+curl -X POST https://your-app.railway.app/download
+
+# Check health
+curl https://your-app.railway.app/health
+```
+
+**API Response**:
+
+```json
+{
+  "success": true,
+  "message": "Chart downloaded successfully",
+  "date": "2025-11-29",
+  "filePath": "/data/2025-11-29/original_chart.png",
+  "timestamp": "2025-11-30T02:22:51.284Z"
+}
+```
+
+### Option 2: Direct Script Execution
+
+```bash
+# Test TradingView download
 npm test
+
+# Or with login (recommended)
+npm run test:login
 ```
 
 This will:

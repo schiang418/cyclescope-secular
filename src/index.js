@@ -9,11 +9,14 @@
 
 import http from 'http';
 import { config } from './config.js';
+import { downloadChartWithLoginAndRetry } from './services/tradingview-with-login.js';
+import { getCurrentDate } from './utils/date.js';
 
 const PORT = process.env.PORT || 3000;
 
 // Simple health check server
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
+  // Health check endpoint
   if (req.url === '/health' || req.url === '/') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
@@ -26,11 +29,45 @@ const server = http.createServer((req, res) => {
         chartUrl: config.tradingview.chartUrl
       }
     }));
-  } else {
+  }
+  // Download chart endpoint
+  else if (req.url === '/download' && req.method === 'POST') {
+    console.log('[API] Download request received');
+    
+    try {
+      const date = getCurrentDate();
+      console.log(`[API] Starting chart download for date: ${date}`);
+      
+      // Download chart with login
+      const filePath = await downloadChartWithLoginAndRetry(date);
+      
+      console.log(`[API] Chart downloaded successfully: ${filePath}`);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Chart downloaded successfully',
+        date: date,
+        filePath: filePath,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('[API] Download failed:', error);
+      
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  }
+  // Not found
+  else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       error: 'Not found',
-      message: 'This service runs scheduled tasks via GitHub Actions'
+      message: 'Available endpoints: GET /health, POST /download'
     }));
   }
 });
