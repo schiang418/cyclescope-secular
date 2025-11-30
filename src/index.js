@@ -391,6 +391,30 @@ const server = http.createServer(async (req, res) => {
       }));
     }
   }
+  // Migrate endpoint
+  else if (req.url === '/migrate' && req.method === 'POST') {
+    console.log('[API] Migrate request received');
+    
+    try {
+      const result = await database.migrate();
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: result.message,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('[API] Migrate failed:', error);
+      
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  }
   // Not found
   else {
     res.writeHead(404, { 'Content-Type': 'application/json' });

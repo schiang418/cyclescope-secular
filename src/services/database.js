@@ -411,6 +411,35 @@ class Database {
   }
 
   /**
+   * Run database migrations
+   * Updates schema to support new features
+   */
+  async migrate() {
+    console.log('[Database] Running migrations...');
+    
+    try {
+      // Migration 1: Change secular_trend from VARCHAR(100) to TEXT
+      console.log('[Database] Migration 1: Updating secular_trend column type...');
+      await this.pool.query(`
+        ALTER TABLE secular_analysis 
+        ALTER COLUMN secular_trend TYPE TEXT;
+      `);
+      console.log('[Database] Migration 1: ✅ secular_trend is now TEXT');
+      
+      console.log('[Database] All migrations completed successfully');
+      return { success: true, message: 'Migrations completed' };
+    } catch (error) {
+      // If column is already TEXT, migration will fail with specific error
+      if (error.code === '42804' || error.message.includes('cannot be cast automatically')) {
+        console.log('[Database] Migration already applied or column type is correct');
+        return { success: true, message: 'Migrations already applied' };
+      }
+      console.error('[Database] Migration failed:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Close database connection
    */
   async close() {
