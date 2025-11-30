@@ -307,8 +307,9 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       
-      // Extract date from asof_date (format: YYYY-MM-DD)
-      const date = latestAnalysis.asof_date.split('T')[0];
+      // Extract date from asof_date (convert Date object to YYYY-MM-DD)
+      const asofDate = new Date(latestAnalysis.asof_date);
+      const date = asofDate.toISOString().split('T')[0];
       const filePath = `${config.storage.dataDir}/${date}/annotated_chart.png`;
       
       if (!fs.existsSync(filePath)) {
@@ -356,8 +357,9 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       
-      // Extract date from asof_date (format: YYYY-MM-DD)
-      const date = latestAnalysis.asof_date.split('T')[0];
+      // Extract date from asof_date (convert Date object to YYYY-MM-DD)
+      const asofDate = new Date(latestAnalysis.asof_date);
+      const date = asofDate.toISOString().split('T')[0];
       const filePath = `${config.storage.dataDir}/${date}/original_chart.png`;
       
       if (!fs.existsSync(filePath)) {
