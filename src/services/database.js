@@ -141,11 +141,15 @@ class Database {
     const scenarios = layer2?.scenario_analysis?.scenarios || [];
     
     // Helper to safely get scenario field
-    const getScenario = (index, field, subfield = null) => {
+    const getScenario = (index, field, arrayIndex = null) => {
       const scenario = scenarios[index];
       if (!scenario) return null;
-      if (subfield) return scenario[field]?.[subfield];
-      return scenario[field];
+      const value = scenario[field];
+      // If arrayIndex is provided, extract element from array
+      if (arrayIndex !== null && Array.isArray(value)) {
+        return value[arrayIndex];
+      }
+      return value;
     };
 
     return {
