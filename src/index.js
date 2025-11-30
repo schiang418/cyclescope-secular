@@ -294,7 +294,21 @@ const server = http.createServer(async (req, res) => {
   // Get annotated chart file (if exists)
   else if (req.url === '/annotated-chart' && req.method === 'GET') {
     try {
-      const date = getCurrentDate();
+      // Get the latest analysis from database to find the correct date
+      const latestAnalysis = await database.getLatestAnalysis();
+      
+      if (!latestAnalysis || !latestAnalysis.asof_date) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          message: 'No analysis found in database. Please run /analyze first.',
+          timestamp: new Date().toISOString()
+        }));
+        return;
+      }
+      
+      // Extract date from asof_date (format: YYYY-MM-DD)
+      const date = latestAnalysis.asof_date.split('T')[0];
       const filePath = `${config.storage.dataDir}/${date}/annotated_chart.png`;
       
       if (!fs.existsSync(filePath)) {
@@ -329,7 +343,21 @@ const server = http.createServer(async (req, res) => {
   // Get latest chart file (if exists)
   else if (req.url === '/latest-chart' && req.method === 'GET') {
     try {
-      const date = getCurrentDate();
+      // Get the latest analysis from database to find the correct date
+      const latestAnalysis = await database.getLatestAnalysis();
+      
+      if (!latestAnalysis || !latestAnalysis.asof_date) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          message: 'No analysis found in database. Please run /analyze first.',
+          timestamp: new Date().toISOString()
+        }));
+        return;
+      }
+      
+      // Extract date from asof_date (format: YYYY-MM-DD)
+      const date = latestAnalysis.asof_date.split('T')[0];
       const filePath = `${config.storage.dataDir}/${date}/original_chart.png`;
       
       if (!fs.existsSync(filePath)) {
