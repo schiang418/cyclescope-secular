@@ -54,9 +54,12 @@ export class GeminiAnnotator {
    * @returns {Promise<string>} Path to annotated chart
    */
   async annotateChart(inputPath, outputPath, layer3) {
+    console.log('\n========================================');
     console.log('[Gemini] Starting chart annotation...');
     console.log(`[Gemini] Input: ${inputPath}`);
     console.log(`[Gemini] Output: ${outputPath}`);
+    console.log(`[Gemini] API Key: ${GEMINI_API_KEY ? GEMINI_API_KEY.substring(0, 20) + '...' : 'NOT SET'}`);
+    console.log(`[Gemini] Model: ${GEMINI_MODEL}`);
 
     // Verify input file exists
     if (!fs.existsSync(inputPath)) {
@@ -67,10 +70,13 @@ export class GeminiAnnotator {
     const instructions = this.formatLayer3ForOverlay(layer3);
     console.log('[Gemini] Overlay text:');
     console.log(instructions);
+    console.log(`[Gemini] Overlay text length: ${instructions.length} chars`);
 
     // Read file as buffer and convert to base64
     const fileBuffer = fs.readFileSync(inputPath);
     const base64Image = fileBuffer.toString('base64');
+    console.log(`[Gemini] Image size: ${fileBuffer.length} bytes`);
+    console.log(`[Gemini] Base64 length: ${base64Image.length} chars`);
 
     // Construct the prompt
     const prompt = `
@@ -103,7 +109,9 @@ Generate a new image that acts as a perfect copy of the original with the reques
 
     try {
       console.log('[Gemini] Calling Gemini API...');
+      console.log(`[Gemini] Request timestamp: ${new Date().toISOString()}`);
 
+      console.log('[Gemini] Sending request to Gemini...');
       const response = await this.client.models.generateContent({
         model: GEMINI_MODEL,
         contents: {
@@ -126,8 +134,13 @@ Generate a new image that acts as a perfect copy of the original with the reques
         },
       });
 
+      console.log('[Gemini] Response received');
+      console.log(`[Gemini] Response timestamp: ${new Date().toISOString()}`);
+      console.log(`[Gemini] Response candidates: ${response.candidates?.length || 0}`);
+      
       // Extract image from response
       const parts = response.candidates?.[0]?.content?.parts;
+      console.log(`[Gemini] Parts count: ${parts?.length || 0}`);
 
       if (!parts) {
         throw new Error('No content returned from Gemini');
@@ -155,10 +168,21 @@ Generate a new image that acts as a perfect copy of the original with the reques
 
       fs.writeFileSync(outputPath, outputBuffer);
       console.log(`[Gemini] Annotated chart saved: ${outputPath}`);
+      console.log(`[Gemini] Output file size: ${outputBuffer.length} bytes`);
+      console.log('[Gemini] Annotation completed successfully');
+      console.log('========================================\n');
 
       return outputPath;
     } catch (error) {
-      console.error('[Gemini] Annotation failed:', error);
+      console.error('\n========================================');
+      console.error('[Gemini] ❌ ANNOTATION FAILED');
+      console.error('[Gemini] Error name:', error.name);
+      console.error('[Gemini] Error message:', error.message);
+      console.error('[Gemini] Error stack:', error.stack);
+      if (error.response) {
+        console.error('[Gemini] API Response:', JSON.stringify(error.response, null, 2));
+      }
+      console.error('========================================\n');
       throw error;
     }
   }
