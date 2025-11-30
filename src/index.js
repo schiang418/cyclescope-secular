@@ -12,8 +12,18 @@ import fs from 'fs';
 import { config } from './config.js';
 import { downloadStockChart } from './services/stockcharts-downloader.js';
 import { getCurrentDate } from './utils/date.js';
+import { OpenAIAssistant } from './services/openai-assistant.js';
+import { database } from './services/database.js';
 
 const PORT = process.env.PORT || 3000;
+
+// Initialize database on startup
+try {
+  await database.initialize();
+  console.log('[Server] Database initialized');
+} catch (error) {
+  console.error('[Server] Database initialization failed:', error);
+}
 
 // Background job tracking
 let downloadStatus = {
@@ -154,6 +164,98 @@ const server = http.createServer(async (req, res) => {
       console.log(`[API] File sent to client successfully`);
     } catch (error) {
       console.error('[API] Download-file failed:', error);
+      
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  }
+  // Analyze chart with OpenAI Assistant and save to database
+  else if (req.url === '/analyze' && req.method === 'POST') {
+    console.log('[API] Analyze request received');
+    
+    try {
+      const date = getCurrentDate();
+      const chartPath = `${config.storage.dataDir}/${date}/original_chart.png`;
+      
+      // Check if chart exists
+      if (!fs.existsSync(chartPath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          message: `Chart not found for date ${date}. Please run /download first.`,
+          timestamp: new Date().toISOString()
+        }));
+        return;
+      }
+      
+      console.log(`[API] Analyzing chart: ${chartPath}`);
+      
+      // Analyze with OpenAI Assistant
+      const assistant = new OpenAIAssistant();
+      const analysis = await assistant.analyze(chartPath, date);
+      
+      console.log('[API] Analysis complete, saving to database...');
+      
+      // Add file path to analysis
+      analysis.original_chart_url = chartPath;
+      
+      // Save to database
+      const savedRecord = await database.saveAnalysis(analysis);
+      
+      console.log(`[API] Analysis saved to database (ID: ${savedRecord.id})`);
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        message: 'Analysis complete and saved to database',
+        date: date,
+        recordId: savedRecord.id,
+        analysis: {
+          layer1: analysis.layer1,
+          layer2: analysis.layer2,
+          layer3: analysis.layer3
+        },
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('[API] Analyze failed:', error);
+      
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: error.message,
+        stack: error.stack,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  }
+  // Get latest analysis from database
+  else if (req.url === '/analysis/latest' && req.method === 'GET') {
+    try {
+      const record = await database.getLatestAnalysis();
+      
+      if (!record) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          message: 'No analysis found in database',
+          timestamp: new Date().toISOString()
+        }));
+        return;
+      }
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        analysis: record,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (error) {
+      console.error('[API] Get latest analysis failed:', error);
       
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
