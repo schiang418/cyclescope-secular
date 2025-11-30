@@ -43,7 +43,7 @@ class Database {
         asof_date DATE NOT NULL UNIQUE,
         
         -- Layer 1: Core Analysis Fields (7 columns)
-        secular_trend VARCHAR(100),
+        secular_trend TEXT,
         secular_regime_status VARCHAR(100),
         channel_position VARCHAR(100),
         recent_behavior_summary TEXT,
