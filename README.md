@@ -120,11 +120,14 @@ Start the server and trigger downloads via HTTP API:
 # Start the server
 npm start
 
-# In another terminal, trigger a download
+# In another terminal, trigger a download (async)
 curl -X POST http://localhost:3000/download
 
-# Check health status
-curl http://localhost:3000/health
+# Check download status
+curl http://localhost:3000/download-status
+
+# Get latest chart
+curl http://localhost:3000/latest-chart -o chart.png
 ```
 
 **From your local Mac to Railway**:
@@ -133,28 +136,116 @@ curl http://localhost:3000/health
 # Get your Railway app URL from the Railway dashboard
 # Example: https://cyclescope-secular-production.up.railway.app
 
-# Trigger download on Railway
+# Trigger download on Railway (async, returns immediately)
 curl -X POST https://your-app.railway.app/download
 
-# Check health
+# Check download status
+curl https://your-app.railway.app/download-status
+
+# Get latest chart (after download completes)
+curl https://your-app.railway.app/latest-chart -o chart.png
+```
+
+### Available API Endpoints
+
+#### 1. Health Check
+
+**`GET /health`** - Check service status and view download status
+
+```bash
 curl https://your-app.railway.app/health
 ```
 
-**API Response**:
-
+**Response**:
 ```json
 {
-  "success": true,
-  "message": "Chart downloaded successfully",
-  "date": "2025-11-29",
-  "filePath": "/data/2025-11-29/original_chart.png",
-  "timestamp": "2025-11-30T02:22:51.284Z"
+  "status": "ok",
+  "service": "cyclescope-secular",
+  "timestamp": "2025-11-30T04:22:51.284Z",
+  "config": {
+    "dataDir": "/data",
+    "retentionDays": 30,
+    "chartUrl": "https://www.tradingview.com/chart/..."
+  },
+  "downloadStatus": {
+    "isRunning": false,
+    "lastStartTime": "2025-11-30T04:20:00.000Z",
+    "lastEndTime": "2025-11-30T04:21:30.000Z",
+    "lastSuccess": true,
+    "lastError": null,
+    "lastFilePath": "/data/2025-11-30/original_chart.png"
+  }
 }
 ```
 
-### API Endpoint: Download File
+#### 2. Download Chart (Async - Recommended)
 
-**`POST /download-file`** - Trigger chart download and return the PNG file directly to your local machine.
+**`POST /download`** - Trigger chart download in background (returns immediately)
+
+```bash
+curl -X POST https://your-app.railway.app/download
+```
+
+**Response** (returns in < 1 second):
+```json
+{
+  "success": true,
+  "message": "Download started in background",
+  "date": "2025-11-30",
+  "status": "processing",
+  "timestamp": "2025-11-30T04:22:51.284Z",
+  "statusUrl": "/download-status"
+}
+```
+
+**Key Features**:
+- ✅ Returns immediately (< 1 second)
+- ✅ Download runs in background (~60 seconds)
+- ✅ Server remains responsive during download
+- ✅ Health check continues to work
+- ✅ Prevents Railway timeout issues
+
+#### 3. Check Download Status
+
+**`GET /download-status`** - Check the status of background download
+
+```bash
+curl https://your-app.railway.app/download-status
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "status": {
+    "isRunning": true,
+    "lastStartTime": "2025-11-30T04:22:51.284Z",
+    "lastEndTime": null,
+    "lastSuccess": null,
+    "lastError": null,
+    "lastFilePath": null
+  },
+  "timestamp": "2025-11-30T04:23:00.000Z"
+}
+```
+
+#### 4. Get Latest Chart
+
+**`GET /latest-chart`** - Get the latest downloaded chart (if exists)
+
+```bash
+# View in browser
+open https://your-app.railway.app/latest-chart
+
+# Or download with curl
+curl https://your-app.railway.app/latest-chart -o latest-chart.png
+```
+
+**Response**: PNG file (image/png) or 404 if no chart exists for today
+
+#### 5. Download File (Sync - For Manual Testing Only)
+
+**`POST /download-file`** - Download chart and return PNG file directly (waits ~60 seconds)
 
 ```bash
 # Download chart and save to local machine
@@ -165,6 +256,43 @@ curl -X POST https://your-app.railway.app/download-file -o "secular-chart-$(date
 ```
 
 **Response**: PNG file (image/png) with filename `chart-YYYY-MM-DD.png`
+
+**Note**: This endpoint waits for the download to complete (~60 seconds). Use `/download` + `/download-status` for async operation.
+
+### Recommended Usage Pattern
+
+**For GitHub Actions (automated daily updates)**:
+```bash
+# 1. Trigger download in background
+curl -X POST https://your-app.railway.app/download
+
+# 2. Wait a bit
+sleep 10
+
+# 3. Poll status until complete
+while true; do
+  STATUS=$(curl -s https://your-app.railway.app/download-status | jq -r '.status.isRunning')
+  if [ "$STATUS" = "false" ]; then
+    break
+  fi
+  echo "Download in progress..."
+  sleep 5
+done
+
+# 4. Get the latest chart
+curl https://your-app.railway.app/latest-chart -o chart.png
+```
+
+**For manual testing from Mac**:
+```bash
+# Option 1: Quick download (waits for completion)
+curl -X POST https://your-app.railway.app/download-file -o chart.png
+
+# Option 2: Async download (check status separately)
+curl -X POST https://your-app.railway.app/download
+# Wait ~60 seconds, then:
+curl https://your-app.railway.app/latest-chart -o chart.png
+```
 
 ### Option 2: Direct Script Execution
 
