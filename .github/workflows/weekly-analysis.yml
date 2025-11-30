@@ -2,9 +2,9 @@ name: Weekly Secular Analysis
 
 on:
   schedule:
-    # Run every Friday at 4:30 PM ET (20:30 UTC in winter, 21:30 UTC in summer)
-    # Using 20:30 UTC for EST (winter time)
-    - cron: '30 20 * * 5'
+    # Run every Friday at 5:00 PM ET (22:00 UTC in winter, 21:00 UTC in summer)
+    # Using 22:00 UTC to ensure it runs after market close (4:00 PM ET)
+    - cron: '0 22 * * 5'
   workflow_dispatch: # Allow manual trigger
 
 jobs:
