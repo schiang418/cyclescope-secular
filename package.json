@@ -21,6 +21,7 @@
   "author": "schiang418",
   "license": "MIT",
   "dependencies": {
+    "@google/genai": "^1.30.0",
     "@playwright/test": "1.57.0",
     "dotenv": "^16.3.1",
     "openai": "^4.104.0",

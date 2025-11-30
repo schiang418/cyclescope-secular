@@ -14,6 +14,7 @@ import { downloadStockChart } from './services/stockcharts-downloader.js';
 import { getCurrentDate } from './utils/date.js';
 import { OpenAIAssistant } from './services/openai-assistant.js';
 import { database } from './services/database.js';
+import { geminiAnnotator } from './services/gemini-annotator.js';
 
 const PORT = process.env.PORT || 3000;
 
@@ -203,6 +204,20 @@ const server = http.createServer(async (req, res) => {
       // Add file path to analysis
       analysis.original_chart_url = chartPath;
       
+      // Annotate chart with Gemini
+      console.log('[API] Annotating chart with Gemini...');
+      const annotatedPath = `${config.storage.dataDir}/${date}/annotated_chart.png`;
+      
+      try {
+        await geminiAnnotator.annotateChart(chartPath, annotatedPath, analysis.layer3);
+        analysis.annotated_chart_url = annotatedPath;
+        console.log('[API] Chart annotation complete');
+      } catch (error) {
+        console.error('[API] Chart annotation failed:', error);
+        // Continue without annotation
+        analysis.annotated_chart_url = null;
+      }
+      
       // Save to database
       const savedRecord = await database.saveAnalysis(analysis);
       
@@ -256,6 +271,41 @@ const server = http.createServer(async (req, res) => {
       }));
     } catch (error) {
       console.error('[API] Get latest analysis failed:', error);
+      
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  }
+  // Get annotated chart file (if exists)
+  else if (req.url === '/annotated-chart' && req.method === 'GET') {
+    try {
+      const date = getCurrentDate();
+      const filePath = `${config.storage.dataDir}/${date}/annotated_chart.png`;
+      
+      if (!fs.existsSync(filePath)) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          message: 'No annotated chart available for today. Please run /analyze first.',
+          timestamp: new Date().toISOString()
+        }));
+        return;
+      }
+      
+      const fileContent = fs.readFileSync(filePath);
+      
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Content-Disposition': `inline; filename="annotated-chart-${date}.png"`,
+        'Content-Length': fileContent.length
+      });
+      res.end(fileContent);
+    } catch (error) {
+      console.error('[API] Annotated-chart failed:', error);
       
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
