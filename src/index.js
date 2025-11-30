@@ -8,6 +8,7 @@
  */
 
 import http from 'http';
+import fs from 'fs';
 import { config } from './config.js';
 import { downloadChartWithLoginAndRetry } from './services/tradingview-with-login.js';
 import { getCurrentDate } from './utils/date.js';
@@ -62,12 +63,49 @@ const server = http.createServer(async (req, res) => {
       }));
     }
   }
+  // Download chart and return file endpoint
+  else if (req.url === '/download-file' && req.method === 'POST') {
+    console.log('[API] Download-file request received');
+    
+    try {
+      const date = getCurrentDate();
+      console.log(`[API] Starting chart download for date: ${date}`);
+      
+      // Download chart with login
+      const filePath = await downloadChartWithLoginAndRetry(date);
+      
+      console.log(`[API] Chart downloaded successfully: ${filePath}`);
+      console.log(`[API] Reading file to send to client...`);
+      
+      // Read the file
+      const fileContent = fs.readFileSync(filePath);
+      
+      // Send the PNG file
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Content-Disposition': `attachment; filename="chart-${date}.png"`,
+        'Content-Length': fileContent.length
+      });
+      res.end(fileContent);
+      
+      console.log(`[API] File sent to client successfully`);
+    } catch (error) {
+      console.error('[API] Download-file failed:', error);
+      
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      }));
+    }
+  }
   // Not found
   else {
     res.writeHead(404, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       error: 'Not found',
-      message: 'Available endpoints: GET /health, POST /download'
+      message: 'Available endpoints: GET /health, POST /download, POST /download-file'
     }));
   }
 });

@@ -152,6 +152,20 @@ curl https://your-app.railway.app/health
 }
 ```
 
+### API Endpoint: Download File
+
+**`POST /download-file`** - Trigger chart download and return the PNG file directly to your local machine.
+
+```bash
+# Download chart and save to local machine
+curl -X POST https://your-app.railway.app/download-file -o chart.png
+
+# Or with custom filename
+curl -X POST https://your-app.railway.app/download-file -o "secular-chart-$(date +%Y-%m-%d).png"
+```
+
+**Response**: PNG file (image/png) with filename `chart-YYYY-MM-DD.png`
+
 ### Option 2: Direct Script Execution
 
 ```bash
