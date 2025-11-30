@@ -21,7 +21,7 @@
   "author": "schiang418",
   "license": "MIT",
   "dependencies": {
-    "@playwright/test": "^1.49.1",
+    "@playwright/test": "1.57.0",
     "openai": "^4.20.0",
     "pg": "^8.11.3",
     "dotenv": "^16.3.1"
