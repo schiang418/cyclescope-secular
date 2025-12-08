@@ -93,14 +93,18 @@ VISUALIZATION RULES:
 5. STYLE: Use bright white text for high contrast. Use a professional sans-serif font. 
 6. FONT SIZE: CRITICAL - USE A VERY SMALL, COMPACT FONT SIZE (approx 10px). The text must be legible but minimize screen real estate usage.
 
-STRICT CONSTRAINTS (CRITICAL):
+STRICT CONSTRAINTS (CRITICAL - ABSOLUTE REQUIREMENTS):
 1. DATA INTEGRITY IS PARAMOUNT: The underlying chart (candlesticks, price numbers on the axis, dates, grid lines, background color) must remain VISUALLY IDENTICAL to the source image provided. 
 2. DO NOT REDRAW THE DATA: Do not regenerate the candlesticks or change the last closing price. The chart data must be preserved exactly as is.
-3. ADDITIVE ONLY: Your job is to ADD the text overlay box on top of the existing image.
-4. TEXT ACCURACY: Ensure all superimposed text is SPELLED CORRECTLY.
+3. DO NOT MODIFY DATES: The date shown in the chart header (e.g., "5-Dec-2025") must remain EXACTLY as shown in the original image. DO NOT change it to today's date or any other date.
+4. DO NOT MODIFY PRICES: All price values (Open, High, Low, Close, Volume) in the chart header must remain EXACTLY as shown in the original image.
+5. DO NOT MODIFY INDICATORS: All indicator values (e.g., RSI) must remain EXACTLY as shown in the original image.
+6. ADDITIVE ONLY: Your job is to ADD the text overlay box on top of the existing image. DO NOT modify any existing chart elements.
+7. TEXT ACCURACY: Ensure all superimposed text is SPELLED CORRECTLY.
+8. PRESERVE EVERYTHING: Every pixel of the original chart must be preserved. Only add the overlay box - do not change anything else.
 
 EXECUTION:
-Generate a new image that acts as a perfect copy of the original with the requested text overlay layered on top.
+Generate a new image that is a PIXEL-PERFECT COPY of the original chart with ONLY the requested text overlay box added on top. The chart itself (including all dates, prices, and indicators) must remain completely unchanged.
     `.trim();
 
     try {
